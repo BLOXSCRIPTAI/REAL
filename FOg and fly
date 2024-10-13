@@ -1,0 +1,17 @@
+wait("3")
+loadstring(game:HttpGet"https://raw.githubusercontent.com/BLOXSCRIPTAI/LAX/refs/heads/main/Fly%20car")()
+
+local lighting = game.Lighting
+local atmosphereCount = 0
+
+for _, child in pairs(lighting:GetChildren()) do
+    if not child:IsA("Atmosphere") then 
+        child:Destroy() 
+    else
+        atmosphereCount = atmosphereCount + 1
+    end 
+end
+
+-- Randomly set the clock time to create variability
+local randomTime = math.random(5, 10)
+lighting.ClockTime = randomTime
