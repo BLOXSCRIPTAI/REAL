@@ -1,0 +1,147 @@
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local gunData = replicatedStorage:FindFirstChild("GunData")
+
+wait(2)
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local gunData = replicatedStorage:FindFirstChild("GunData")
+
+if gunData then
+    -- Function to remove "Shoot" animations recursively
+    local function removeShootAnimations(folder)
+        for _, child in ipairs(folder:GetChildren()) do
+            if child:IsA("Animation") and child.Name == "Shoot" then
+                child:Destroy()
+            elseif child:IsA("Folder") then
+                removeShootAnimations(child)  -- Recursively check sub-folders
+            end
+        end
+    end
+
+    removeShootAnimations(gunData)
+end
+
+wait(3)
+local Converted = {
+    ["_HealthBarGui"] = Instance.new("ScreenGui"),
+    ["_LocalScript"] = Instance.new("LocalScript"),
+    ["_Tray"] = Instance.new("Frame"),
+    ["_HealthBar"] = Instance.new("ImageLabel"),
+    ["_Fill"] = Instance.new("ImageLabel"),
+    ["_Padding"] = Instance.new("UIPadding"),
+    ["_HealthNumber"] = Instance.new("TextLabel"),
+}
+
+-- Properties: 
+Converted["_HealthBarGui"].Name = "HealthBarGui"
+Converted["_HealthBarGui"].Parent = game:GetService("CoreGui")
+
+Converted["_Tray"].AnchorPoint = Vector2.new(0.5, 1)
+Converted["_Tray"].BackgroundTransparency = 1
+Converted["_Tray"].BorderColor3 = Color3.fromRGB(27, 42, 53)
+Converted["_Tray"].Position = UDim2.new(0.496, 0, 0.88, -18)
+Converted["_Tray"].Size = UDim2.new(0, 247, 0, 28)
+Converted["_Tray"].Name = "Tray"
+Converted["_Tray"].Parent = Converted["_HealthBarGui"]
+
+Converted["_HealthBar"].Image = "rbxasset://textures/ui/TopBar/HealthBarBase.png"
+Converted["_HealthBar"].ScaleType = Enum.ScaleType.Slice
+Converted["_HealthBar"].SliceCenter = Rect.new(4, 3, 4, 3)
+Converted["_HealthBar"].AnchorPoint = Vector2.new(0, 0.5)
+Converted["_HealthBar"].BackgroundTransparency = 1
+Converted["_HealthBar"].BorderColor3 = Color3.fromRGB(27, 42, 53)
+Converted["_HealthBar"].LayoutOrder = 1
+Converted["_HealthBar"].Position = UDim2.new(-0.005, 0, 0.5, 0)
+Converted["_HealthBar"].Size = UDim2.new(1.0149467, 0, 1, 0)
+Converted["_HealthBar"].Name = "HealthBar"
+Converted["_HealthBar"].Parent = Converted["_Tray"]
+
+Converted["_Fill"].Image = "rbxasset://textures/ui/TopBar/HealthBar.png"
+Converted["_Fill"].ImageColor3 = Color3.fromRGB(27, 252, 107)  -- Green
+Converted["_Fill"].ScaleType = Enum.ScaleType.Slice
+Converted["_Fill"].SliceCenter = Rect.new(4, 3, 4, 3)
+Converted["_Fill"].BackgroundTransparency = 1
+Converted["_Fill"].BorderColor3 = Color3.fromRGB(27, 42, 53)
+Converted["_Fill"].Position = UDim2.new(-0.0025, 0, 0, 0)
+Converted["_Fill"].Size = UDim2.new(1.0025, 0, 1, 0)
+Converted["_Fill"].Name = "Fill"
+Converted["_Fill"].Parent = Converted["_HealthBar"]
+
+Converted["_Padding"].PaddingTop = UDim.new(0, 4)
+Converted["_Padding"].Name = "Padding"
+Converted["_Padding"].Parent = Converted["_Tray"]
+
+Converted["_HealthNumber"].Font = Enum.Font.SourceSansBold
+Converted["_HealthNumber"].Text = "100%"
+Converted["_HealthNumber"].TextColor3 = Color3.fromRGB(49, 49, 49)
+Converted["_HealthNumber"].TextScaled = true
+Converted["_HealthNumber"].TextSize = 14
+Converted["_HealthNumber"].TextWrapped = true
+Converted["_HealthNumber"].AnchorPoint = Vector2.new(0.5, 0.5)
+Converted["_HealthNumber"].BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Converted["_HealthNumber"].BackgroundTransparency = 1
+Converted["_HealthNumber"].BorderColor3 = Color3.fromRGB(0, 0, 0)
+Converted["_HealthNumber"].BorderSizePixel = 0
+Converted["_HealthNumber"].Position = UDim2.new(0.51, 0, 0.464, 0)
+Converted["_HealthNumber"].Size = UDim2.new(0, 147, 0, 19)
+Converted["_HealthNumber"].Name = "HealthNumber"
+Converted["_HealthNumber"].Parent = Converted["_Tray"]
+
+-- Script to manage Health Bar and Player Name Caching:
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local cache = {}
+
+local function updateHealthBar(humanoid)
+    local tweens = game:GetService("TweenService")
+
+    local function getHealthBarColor(healthPercent)
+        local HealthGreenColor = Color3.fromRGB(27, 252, 107)  -- Always green
+
+        return HealthGreenColor
+    end
+
+    local LastHealth = humanoid.Health
+
+    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+        local base = Converted["_HealthBarGui"].Tray:WaitForChild("HealthBar")
+        local healthPercent = humanoid.Health / humanoid.MaxHealth
+        
+        -- Update health bar fill size and color
+        tweens:Create(base.Fill, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Size = UDim2.new(healthPercent, 0, 1, 0),
+            ImageColor3 = getHealthBarColor(healthPercent)  -- Always green
+        }):Play()
+
+        -- Update health number display
+        base.Parent.HealthNumber.Text = math.round(humanoid.Health) .. "%"
+
+        -- Check if health is 0 and find the new player
+        if humanoid.Health <= 0 then
+            wait(1) -- Wait for respawn
+            characterAdded() -- Call the function to handle character respawn
+        end
+    end)
+end
+
+local function characterAdded()
+    -- Get the new character and humanoid
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    
+    -- Cache the new humanoid
+    cache[character] = { player = LocalPlayer, humanoid = humanoid }
+
+    -- Update the health bar with the new humanoid
+    updateHealthBar(humanoid)
+
+    -- Initialize health bar display to current health
+    local healthPercent = humanoid.Health / humanoid.MaxHealth
+    Converted["_HealthBarGui"].Tray:WaitForChild("HealthBar").Fill.Size = UDim2.new(healthPercent, 0, 1, 0)
+    Converted["_HealthBarGui"].Tray.HealthNumber.Text = math.round(humanoid.Health) .. "%"
+end
+
+-- Initial call for the current character
+characterAdded()
+
+-- Connect to CharacterAdded to handle respawns
+LocalPlayer.CharacterAdded:Connect(characterAdded)
